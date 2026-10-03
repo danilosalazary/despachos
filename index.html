@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Despachos · mensajes WhatsApp</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--bd:#d9dde3;--ac:#128c7e;--wr:#b45309;--er:#b91c1c;--ok:#15803d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101418;--card:#1a2027;--tx:#e8eaed;--mut:#9aa3ad;--bd:#2c353f;--ac:#25d366;--wr:#fbbf24;--er:#f87171;--ok:#4ade80}}
+:root[data-theme="dark"]{--bg:#101418;--card:#1a2027;--tx:#e8eaed;--mut:#9aa3ad;--bd:#2c353f;--ac:#25d366;--wr:#fbbf24;--er:#f87171;--ok:#4ade80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:auto;padding:10px 12px 40px}h1{font-size:18px;margin:6px 0 10px}h2{font-size:14px;margin:16px 0 6px;color:var(--mut)}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g label{display:block;font-size:12px;color:var(--mut)}.f{grid-column:1/-1}
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;width:100%}
+button{cursor:pointer;width:auto}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button:disabled{opacity:.45}
+input[type=checkbox]{width:auto}.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.b6{display:grid;grid-template-columns:1fr 1fr;gap:8px}.b6 button{width:100%;text-align:left;padding:10px}.b6 small{display:block;color:var(--mut);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b6 .s{border-color:var(--ok)}.b6 .s small{color:var(--ok)}
+.t{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:6px;display:flex;gap:8px;align-items:center}.t div{flex:1;min-width:0}.m{color:var(--mut);font-size:12px}
+#md{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:9}#md.on{display:flex}
+#bx{background:var(--card);width:100%;max-width:760px;margin:auto;border-radius:16px 16px 0 0;padding:14px;max-height:94%;overflow:auto}
+textarea{height:250px;resize:vertical}.w{color:var(--wr);font-size:13px;margin:4px 0}.e{color:var(--er);font-size:13px;margin:4px 0}
+</style></head><body><main>
+<h1>🚛 Despachos · mensajes de WhatsApp</h1>
+<div class="g" id="fm"></div>
+<h2>Enviar</h2><div class="b6" id="bt"></div>
+<div class="row" style="margin-top:12px"><button id="sv" class="p">💾 Guardar viaje</button><button id="nw">➕ Nuevo</button><button id="ex">⬇ Registro CSV</button><label class="m"><input type="file" id="fl" accept=".json" hidden>📂 Cargar apoyo</label></div>
+<h2>Viajes guardados</h2><div id="ls"></div>
+<div id="md"><div id="bx"><b id="mt"></b><div class="row" style="margin:8px 0"><input id="mn" placeholder="Destinatario" style="flex:1"><input id="mp" placeholder="+593…" style="width:160px"></div>
+<div id="av"></div><textarea id="tx"></textarea><div class="row m" style="margin-top:6px"><span>Modo de envío:</span><select id="md2" style="width:auto;flex:1"><option value="api">WhatsApp directo (&amp;app_absent=1&amp;send=1)</option><option value="app">Abrir la app (whatsapp://)</option><option value="wa">wa.me clásico</option></select></div><label class="w" id="ov" hidden><input type="checkbox" id="ck"> Enviar de todas formas</label>
+<div class="row" style="margin-top:10px"><button class="p" id="go">Abrir WhatsApp</button><button id="cp">Copiar</button><button id="cl">Cerrar</button></div></div></div></main>
+<script>
+let T=/*DATA*/null;
+/*CORE*/
+const FB='+593989956236',DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const eq=(a,b)=>String(a??'').trim().toLowerCase()===String(b??'').trim().toLowerCase();
+const Q=(tb,col,v)=>(T[tb]||[]).find(r=>eq(r[col],v));
+const fm=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const PD=s=>{const[a,b,c]=String(s).split('-').map(Number);return new Date(a,b-1,c)};
+const fU=d=>DIAS[d.getDay()].toUpperCase()+' '+d.getDate()+' de '+MES[d.getMonth()]+' de '+d.getFullYear();
+const fL=d=>DIAS[d.getDay()]+' '+d.getDate()+' de '+MES[d.getMonth()]+' de '+d.getFullYear();
+const sal=()=>{const h=new Date().getHours();return(T.tbSaludo.find(r=>r.HORAS>=h)||{}).Saludo||''};
+const obs=h=>(Q('tbHoraOrden','hora orden',h)||{}).Observacion||'';
+const prod=f=>(Q('tbProductos','Producto',f.producto)||{}).Nombre||'no hay';
+const com=f=>(Q('tbAreas','Areas',f.area)||{}).Nombre||'no hay';
+const av=f=>f.producto==='AVGAS';
+const cant=f=>fm(av(f)?f.g60:f.cap);
+const pila=f=>(Q('tbChofer','Chofer',f.conductor)||{}).NombrePila||'';
+const ruta=f=>(f.proc+'-'+f.dest);
+const ind=f=>f.muelle!=='Industria';
+const coo=f=>Q('tbCoordinador','TER_PRO',f.proc+f.area)||Q('tbCoordinador','TER_PRO',f.proc);
+const tel={cond:f=>{const c=(Q('tbChofer','Chofer',f.conductor)||{}).Celular;return c&&String(c).length>1?c:FB},
+admi:f=>(Q('tbDuenos','Transportista',f.transporte)||{}).Celular||FB,coord:f=>(coo(f)||{}).Celular||FB};
+const lMuelle=f=>{const m=Q('tbMuelles','Destinos',f.muelle);return m?(f.proc==='Pascuales'?m.Pascuales:m.Libertad)||'':''};
+const compart=(f,pl)=>{const C=[1,2,3,4,5,6].map(i=>{const v=pl['C'+i];return v===null||v===undefined||v===''?null:Number(v)}),
+tg=Number(f.g60)>0?Number(f.g60):Number(f.cap)||0,den=Number(pl.Capacidad)||C.reduce((a,b)=>a+(b||0),0)||1,
+fc=C.map(c=>c===null?0:Math.floor(tg/den*c+1e-9));let dif=tg-fc.reduce((a,b)=>a+b,0);
+return C.map((c,i)=>{if(c===null)return'';const a=dif>0?1:0;if(dif>0)dif--;return'\n       '+['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣'][i]+' • '+(fc[i]+a)}).join('')};
+const M={
+coordinar:f=>{const c=coo(f),d=PD(f.fecha),pl=Q('tbPlaca','Placas',f.placa),A=av(f),sp=pl?pl.Sellos:'-';
+return sal()+'  _*```'+(c?c.Coordinador:'no hay')+'```*_\n🆕 Por favor coordinar *TURNO*, *SELLOS* y *Nota de Entrega/Recepción*\n📅 para el *'+fU(d)+'*'+obs(f.hora)+'\n👔 Con orden de la comercializadora *'+com(f)+'*'+(f.area==='SC'&&f.orden?' - Orden No. *'+f.orden+'*':'')+'\n'+
+(ind(f)?'🛳️ Barco *'+f.sector+'* en el muelle *'+f.muelle.toUpperCase()+'* _'+lMuelle(f)+'_ ':'🏭 Cliente *'+f.sector+'* - *Planta Industrial* ')+'_('+f.dest+')_\n'+
+(A?'🛩️':'⛽')+' Producto *'+prod(f)+'*\n📇 Cantidad *'+cant(f)+'* galones\n👷🏽 Para el conductor *'+f.conductor+'* (📱'+tel.cond(f)+' )\n🪪 Cédula No. *'+((Q('tbChofer','Chofer',f.conductor)||{}).Cedula||'no hay')+'*\n🚛 En la unidad de placas *_'+f.placa+'_*'+(!A&&sp!=='-'?' ( '+sp+' sellos ) • '+(f.sellos||''):'•')+'\n🔢 Compartimientos: '+(A?'(C1) - '+fm(f.g60):(pl?compart(f,pl):''))},
+solicitar:f=>{const d=PD(f.fecha),A=av(f);return sal()+'  _*```'+((Q('tbDuenos','Transportista',f.transporte)||{}).Nombre||'')+'```*_ 🆕 \n🚛 Ayúdeme designando *CONDUCTOR* y *UNIDAD*\n📅 Para el *'+fU(d)+'* '+obs(f.hora)+'\n'+
+(ind(f)?'🛳️ Viaje para el *B/P '+f.sector+'* en el muelle *'+f.muelle.toUpperCase()+'* ':'🏭 Viaje para *'+f.sector+'* - *Planta Industrial* ')+' \n👔 Con la Comercializadora *'+com(f)+'*\n🛣️ Ruta *'+ruta(f).toUpperCase()+'* _('+f.dest+')_\n'+(A?'🛩️':'⛽')+' Producto *'+prod(f)+'*\n📇 Cantidad *'+cant(f)+'* galones\n\n📨 _Por favor me confirma si se puede y quién iría_ ✅\n™️\n\n'},
+asignar:f=>{const d=PD(f.fecha),A=av(f),hoy=fmtD(new Date())===f.fecha,c=coo(f),mm=Q('tbMuelles','Destinos',f.muelle),ms=Q('tbMuelles','Destinos',f.sector);
+return sal()+'  _*```'+pila(f)+'```*_ 👷🏽\n🚛 Viaje '+(f.comp?'*COMPARTIDO* ':'')+'asignado en la unidad *_'+f.placa+'_*\n📅 Para '+(hoy?'*HOY ':'el *')+fU(d)+'*'+obs(f.hora)+'\n👔 Con la comercializadora *'+com(f)+'*\n🛣️ Ruta *'+ruta(f).toUpperCase()+'*\n'+
+(ind(f)?'🏭 Cliente *'+f.cliente+'*\n🛳️ Barco *'+f.sector+'* en el muelle *'+f.muelle.toUpperCase()+'* ':'🏭 Cliente *'+f.sector+'* - *Planta Industrial* ')+'_('+f.dest+')_\n'+
+((mm||ms)?'📍 Ver mapa [ _'+((ind(f)?mm:ms)||{}).Maps+'_ ]':'')+'\n'+(A?'🛩️':'⛽')+' Producto *'+prod(f)+'*\n📇 Cantidad *'+cant(f)+'* galones'+
+(!A?'\n🧑🏽‍💻 Coordinar sellos, orden y turno con *'+(c?c.Coordinador:'Danilo').toUpperCase()+' (📱'+(c?c.Celular:FB)+' )*':'')+'\n\n📨 *_Por favor confirmar la recepción del mensaje y asignación del viaje_* ✅'},
+anular:f=>{const d=PD(f.fecha),A=av(f);return sal()+'  _*```'+pila(f)+'```*_ 🛎️🫡\n\n‼️‼️⚠️⚠️ *S E   C A N C E L A* ⚠️⚠️‼️‼️ \n\n🚛 Viaje asignado en la unidad *_'+f.placa+'_* 🚥\n📅 Para el *'+fL(d)+'* \n👔 Con la comercializadora *'+com(f)+'*\n🛣️ Ruta *'+ruta(f).toUpperCase()+'*\n'+
+(ind(f)?'🏭 Cliente *'+f.cliente+'*\n🛳️ Barco *'+f.sector+'* en el muelle *'+f.muelle.toUpperCase()+'* ':'🏭 Cliente *'+f.sector+'* - *Planta Industrial*')+' _('+f.dest+')_ 📍\n'+(A?'🛩️':'⛽')+' Producto *'+prod(f)+'*\n📇 Cantidad *'+cant(f)+'* galones\n\n📨 *_Por favor confirmar la recepción del mensaje_* ✅\n\n'},
+descargar:f=>{const A=av(f),lb='\n🛳️ en el *B/P '+f.sector+'* _muelle_ *'+f.muelle.toUpperCase()+'* _('+f.dest+')_',
+enc=(f.area==='PT'||A)?f.cliente+'*'+lb:(!ind(f)?f.sector+'* \n🏭 en la *PLANTA INDUSTRIAL*':com(f)+'* '+lb),
+r=Q('tbRespo','Responsables Descarga',f.resp),t=new Date(f.ini),h=t.getHours(),
+ht=String(h%12||12).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+' '+(h<12?'a.\u202fm.':'p.\u202fm.')+'* del *'+DIAS[t.getDay()]+' '+String(t.getDate()).padStart(2,'0')+' de '+MES[t.getMonth()]+' del '+t.getFullYear();
+return sal()+'  _*```'+pila(f)+'```*_ 🫡 *_('+f.placa+')_* 🚛\n\n👔 El encargado de la *DESCARGA* por parte de *'+enc+'\n👷🏽 es *'+String(f.resp).toUpperCase()+(r?r.Celular:'')+'*\n🕰️ y la maniobra empieza desde las *'+ht+'*\n\n⚠️⚠️ _Favor comunicarse 📞 con el '+(!ind(f)?'*PERSONAL DE SEGURIDAD* 👮🏽':'*PERSONAL ENCARGADO* 👷🏽')+'_🚨'},
+recordar:f=>(T.recordatorio||'').replace(/^\s+/,'')};
+const fmtD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+/*ENDCORE*/
+const OPC=[{k:'asignar',t:'Asignar',i:'🚛',w:'Conductor',tl:'cond'},{k:'anular',t:'Anular',i:'🛑',w:'Conductor',tl:'cond'},
+{k:'descargar',t:'Descargar',i:'📥',w:'Conductor',tl:'cond'},{k:'recordar',t:'Recordar',i:'‼️',w:'Conductor',tl:'cond'},
+{k:'solicitar',t:'Solicitar',i:'📨',w:'Transportista',tl:'admi'},{k:'coordinar',t:'Coordinar',i:'🧑🏽‍💻',w:'Coordinador',tl:'coord'}];
+const REQ={asignar:['conductor','placa'],anular:['conductor','placa'],descargar:['conductor','placa','resp','ini'],recordar:['conductor'],solicitar:['transporte'],coordinar:['conductor','placa']};
+const BASE=['fecha','area','producto','proc','dest','muelle'],NM={fecha:'Fecha',area:'Área',producto:'Producto',proc:'Procedencia',dest:'Destino',muelle:'Muelle',conductor:'Conductor',placa:'Placa',resp:'Responsable',ini:'Hora Inicio',transporte:'Transporte',cap:'Capacidad',g60:'60º'};
+const FLD=[['fecha','Fecha','date'],['area','Área','s:Areas'],['cliente','Cliente','l:clientes'],['sector','Sector','l:sectores'],['producto','Producto','s:Producto'],['transporte','Transporte','s:Transportista'],
+['g60','60º','number'],['cap','Capacidad','number'],['proc','Procedencia','s:Terminal'],['dest','Destino','l:destinos'],['muelle','Muelle','l:muelles'],['orden','Orden Pedido','text'],
+['hora','Hora Orden','s:hora'],['conductor','Conductor','l:chofer'],['placa','Placa','l:placa'],['resp','Responsable','s:resp'],['ini','Hora Inicio','datetime-local'],['sellos','Sellos (opcional)','text']];
+const $=s=>document.querySelector(s),LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const dig=p=>String(p||'').replace(/\D/g,''),okTel=p=>/^593\d{9}$/.test(dig(p));
+let F={},cur=null,TR=LS('dsy_tr')||[],id=null,pdel=null,ptm=null;
+const opts=(a,v)=>'<option></option>'+a.map(x=>`<option ${eq(x,v)?'selected':''}>${esc(x)}</option>`).join('');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uniq=a=>[...new Set(a.filter(Boolean))],S=a=>uniq(a).sort((x,y)=>String(x).localeCompare(String(y),'es',{sensitivity:'base',numeric:true}));
+function lists(){const L={Areas:T.tbAreas.map(r=>r.Areas),Producto:T.tbProductos.map(r=>r.Producto),Transportista:T.tbDuenos.map(r=>r.Transportista),Terminal:uniq(T.tbCoordinador.map(r=>r.Terminal)),
+hora:T.tbHoraOrden.map(r=>r['hora orden']),resp:T.tbRespo.map(r=>r['Responsables Descarga']),clientes:T.listas.clientes,sectores:T.listas.sectores,destinos:T.listas.destinos,
+muelles:uniq(T.tbMuelles.map(r=>r.Destinos).concat('Industria')),chofer:T.tbChofer.map(r=>r.Chofer),placa:T.tbPlaca.map(r=>r.Placas)};for(const k in L)L[k]=S(L[k]);return L}
+function build(){const L=lists();$('#fm').innerHTML=FLD.map(([k,n,t])=>{let h;
+if(t.startsWith('s:'))h=`<select data-k="${k}">${opts(L[t.slice(2)],F[k])}</select>`;
+else if(t.startsWith('l:'))h=`<input data-k="${k}" list="dl_${t.slice(2)}" value="${esc(F[k])}" autocomplete="off">`;
+else h=`<input data-k="${k}" type="${t}" value="${esc(F[k])}">`;
+return `<div><label>${n}</label>${h}</div>`}).join('')+'<div class="f"><label><input type="checkbox" id="cm" '+(F.comp?'checked':'')+'> Viaje compartido</label></div>'+
+Object.keys(L).filter(k=>/^(clientes|sectores|destinos|muelles|chofer|placa)$/.test(k)).map(k=>`<datalist id="dl_${k}">${L[k].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`).join('');refresh()}
+function refresh(){$('#bt').innerHTML=OPC.map(o=>{const t=((TR.find(x=>x.id===id)||{}).log||{})[o.k];let p='';try{p=tel[o.tl](F)}catch(e){}
+return `<button data-k="${o.k}" class="${t?'s':''}">${o.i} ${o.t}<small>${t?'✔ enviado '+t:o.w+' · '+esc(p)}</small></button>`}).join('');
+$('#ls').innerHTML=[...TR].sort((a,b)=>String(b.f.fecha||'').localeCompare(String(a.f.fecha||''))||String(a.f.cliente||'').localeCompare(String(b.f.cliente||''),'es',{sensitivity:'base'})).map(x=>`<div class="t"><div><b>${esc(x.f.cliente||x.f.sector||'(sin cliente)')}</b> <span class="m">${esc(x.f.fecha)} · ${esc(x.f.conductor||'—')} · ${esc(x.f.placa||'—')}</span></div><button data-l="${x.id}">Abrir</button><button data-d="${x.id}" style="${pdel==x.id?'background:var(--er);color:#fff;border-color:var(--er)':''}">${pdel==x.id?'¿Borrar?':'🗑'}</button></div>`).join('')||'<p class="m">Aún no hay viajes guardados.</p>'}
+function val(f,k,p){const E=[],W=[];
+BASE.concat(REQ[k]).concat(av(f)?['g60']:['cap']).forEach(x=>{if(!String(f[x]??'').trim())E.push('Falta '+NM[x]+'.')});
+if(!dig(p))E.push('Falta el celular del destinatario.');else if(!okTel(p))E.push('El celular no tiene formato +593 y 9 dígitos.');
+if(dig(p)===dig(FB))W.push('Es tu número de respaldo (+593989956236): no se halló el celular real en las hojas de apoyo.');
+if(f.conductor&&!Q('tbChofer','Chofer',f.conductor))W.push('El conductor no está en la hoja de choferes.');
+if(f.placa&&!Q('tbPlaca','Placas',f.placa))W.push('La placa no está en Autotanques.');
+if(f.transporte&&!Q('tbDuenos','Transportista',f.transporte))W.push('El transportista no está en la hoja de dueños.');
+if(k==='coordinar'&&f.proc&&!coo(f))W.push('No hay coordinador para '+f.proc+' / '+f.area+'.');
+if(k==='descargar'&&f.resp&&!Q('tbRespo','Responsables Descarga',f.resp))W.push('El responsable no tiene celular en la hoja.');
+const cu=cur&&(TR.find(x=>x.id===id)||{log:{}}).log[k];if(cu)W.push('Ya se envió este mensaje ('+cu+').');
+if(f.cap&&f.placa){const p=Q('tbPlaca','Placas',f.placa);if(p&&p.Capacidad&&Number(p.Capacidad)!==Number(f.cap)&&!av(f))W.push('La capacidad ('+f.cap+') difiere de la unidad ('+p.Capacidad+').')}
+return{E,W}}
+function abrir(k){F.comp=$('#cm').checked;const o=OPC.find(x=>x.k===k);let p='',tx='',er=null;try{p=tel[o.tl](F);tx=M[k](F)}catch(e){er=e}
+cur={k,o};$('#mt').textContent=o.i+' '+o.t+' → '+o.w;$('#mn').value=o.w;$('#mp').value=p;$('#tx').value=tx;$('#ck').checked=false;$('#md').classList.add('on');chkM(er)}
+function chkM(er){const{E,W}=val(F,cur.k,$('#mp').value);if(er)E.push('No se pudo armar el mensaje: faltan datos.');
+$('#av').innerHTML=E.map(x=>`<div class="e">⛔ ${esc(x)}</div>`).join('')+W.map(x=>`<div class="w">⚠ ${esc(x)}</div>`).join('');
+if(!$('#tx').value.trim())$('#tx').value='';$('#ov').hidden=!W.length;$('#go').disabled=!!E.length||!$('#tx').value.trim()||(W.length>0&&!$('#ck').checked)}
+const marca=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+MES[d.getMonth()].slice(0,3)+' - '+p(d.getHours())+':'+p(d.getMinutes())}
+function guardar(){if(!id){id=Date.now();TR.unshift({id,f:{...F},log:{}})}else{const x=TR.find(t=>t.id===id);x?x.f={...F}:TR.unshift({id,f:{...F},log:{}})}LS('dsy_tr',TR);refresh()}
+$('#fm').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;F[k]=e.target.value;LS('dsy_f',F);
+if(k==='conductor'){const c=Q('tbChofer','Chofer',F.conductor);if(c&&c.PLACAS&&!F.placa){F.placa=c.PLACAS;$('[data-k=placa]').value=F.placa}}
+if(k==='placa'||k==='conductor'){const p=Q('tbPlaca','Placas',F.placa);if(p&&p.Capacidad&&!F.cap){F.cap=p.Capacidad;$('[data-k=cap]').value=F.cap}}refresh()});
+$('#fm').addEventListener('change',e=>{if(e.target.id==='cm')F.comp=e.target.checked});
+$('#bt').onclick=e=>{const b=e.target.closest('button');if(b)abrir(b.dataset.k)};
+$('#mp').oninput=$('#tx').oninput=$('#ck').onchange=()=>chkM();
+function urlWA(p,t){t=(t.toWellFormed?t.toWellFormed():t).normalize('NFC');const n=dig(p),q=encodeURIComponent(t),m=$('#md2').value;
+if(m==='app')return 'whatsapp://send?phone='+n+'&text='+q;
+if(m==='wa')return 'https://wa.me/'+n+'?text='+q;
+return 'https://api.whatsapp.com/send/?phone='+n+'&text='+q+'&type=phone_number&app_absent=1&send=1'}
+function abrirWA(p,t){const a=document.createElement('a');a.href=urlWA(p,t);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}
+$('#md2').value=LS('dsy_modo')||'api';$('#md2').onchange=()=>LS('dsy_modo',$('#md2').value);
+$('#cl').onclick=()=>{$('#md').classList.remove('on');cur=null};
+$('#cp').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText($('#tx').value);
+$('#go').onclick=()=>{guardar();const x=TR.find(t=>t.id===id);x.log[cur.k]=marca();LS('dsy_tr',TR);
+abrirWA($('#mp').value,$('#tx').value);$('#md').classList.remove('on');cur=null;refresh()};
+$('#sv').onclick=()=>{F.comp=$('#cm').checked;guardar()};
+$('#nw').onclick=()=>{F={fecha:fmtD(new Date())};id=null;LS('dsy_f',F);build()};
+$('#ls').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.l){const x=TR.find(t=>t.id==b.dataset.l);id=x.id;F={...x.f};LS('dsy_f',F);build()}
+if(b.dataset.d){if(pdel!=b.dataset.d){pdel=b.dataset.d;refresh();clearTimeout(ptm);ptm=setTimeout(()=>{pdel=null;refresh()},4000);return}
+TR=TR.filter(t=>t.id!=b.dataset.d);if(id==b.dataset.d)id=null;pdel=null;LS('dsy_tr',TR);refresh()}};
+$('#ex').onclick=()=>{const r=['cliente,fecha,conductor,placa,opcion,enviado'];TR.forEach(x=>Object.entries(x.log).forEach(([k,t])=>r.push([x.f.cliente,x.f.fecha,x.f.conductor,x.f.placa,k,t].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))));
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+r.join('\n')],{type:'text/csv'}));a.download='registro_envios.csv';a.click()};
+$('#fl').onchange=e=>{const r=new FileReader();r.onload=()=>{T=JSON.parse(r.result);build()};r.readAsText(e.target.files[0])};
+(async()=>{if(!T){try{T=await(await fetch('data/apoyo.json')).json()}catch(e){document.body.insertAdjacentHTML('afterbegin','<p class="e" style="padding:12px">Carga data/apoyo.json con 📂 Cargar apoyo.</p>');return}}
+F=LS('dsy_f')||{fecha:fmtD(new Date())};build()})();
+</script></body></html>
