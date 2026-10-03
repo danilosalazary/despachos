@@ -83,7 +83,7 @@ const OPC=[{k:'asignar',t:'Asignar',i:'🚛',w:'Conductor',tl:'cond'},{k:'anular
 const REQ={asignar:['conductor','placa'],anular:['conductor','placa'],descargar:['conductor','placa','resp','ini'],recordar:['conductor'],solicitar:['transporte'],coordinar:['conductor','placa']};
 const BASE=['fecha','area','producto','proc','dest','muelle'],NM={fecha:'Fecha',area:'Área',producto:'Producto',proc:'Procedencia',dest:'Destino',muelle:'Muelle',conductor:'Conductor',placa:'Placa',resp:'Responsable',ini:'Hora Inicio',transporte:'Transporte',cap:'Capacidad',g60:'60º'};
 const FLD=[['fecha','Fecha','date'],['area','Área','s:Areas'],['cliente','Cliente','l:clientes'],['sector','Sector','l:sectores'],['producto','Producto','s:Producto'],['transporte','Transporte','s:Transportista'],
-['g60','60º','number'],['cap','Capacidad','number'],['proc','Procedencia','s:Terminal'],['dest','Destino','l:destinos'],['muelle','Muelle','l:muelles'],['orden','Orden Pedido','text'],
+['g60','60º','miles'],['cap','Capacidad','miles'],['proc','Procedencia','s:Terminal'],['dest','Destino','l:destinos'],['muelle','Muelle','l:muelles'],['orden','Orden Pedido','text'],
 ['hora','Hora Orden','s:hora'],['conductor','Conductor','l:chofer'],['placa','Placa','l:placa'],['resp','Responsable','s:resp'],['ini','Hora Inicio','datetime-local'],['sellos','Sellos (opcional)','text']];
 const $=s=>document.querySelector(s),LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const dig=p=>String(p||'').replace(/\D/g,''),okTel=p=>/^593\d{9}$/.test(dig(p));
@@ -98,6 +98,7 @@ function build(){const L=lists();$('#fm').innerHTML=FLD.map(([k,n,t])=>{let h;
 if(k==='area')h=`<select data-k="area"><option></option>${[...T.tbAreas].sort((a,b)=>String(a.Nombre).localeCompare(String(b.Nombre),'es')||String(a.Areas).localeCompare(String(b.Areas))).map(r=>`<option value="${esc(r.Areas)}" ${eq(r.Areas,F.area)?'selected':''}>${esc(String(r.Nombre).replace(/\*/g,''))}${T.tbAreas.filter(z=>z.Nombre===r.Nombre).length>1?' ('+esc(r.Areas)+')':''}</option>`).join('')}</select>`;
 else if(t.startsWith('s:'))h=`<select data-k="${k}">${opts(L[t.slice(2)],F[k])}</select>`;
 else if(t.startsWith('l:'))h=`<input data-k="${k}" list="dl_${t.slice(2)}" value="${esc(F[k])}" autocomplete="off">`;
+else if(t==='miles')h=`<input data-k="${k}" type="text" inputmode="numeric" autocomplete="off" value="${F[k]?fm(F[k]):''}">`;
 else h=`<input data-k="${k}" type="${t}" value="${esc(F[k])}">`;
 return `<div><label>${n}</label>${h}</div>`}).join('')+'<div class="f"><label><input type="checkbox" id="cm" '+(F.comp?'checked':'')+'> Viaje compartido</label></div>'+
 Object.keys(L).filter(k=>/^(clientes|sectores|destinos|muelles|chofer|placa)$/.test(k)).map(k=>`<datalist id="dl_${k}">${L[k].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`).join('');refresh()}
@@ -123,9 +124,9 @@ $('#av').innerHTML=E.map(x=>`<div class="e">⛔ ${esc(x)}</div>`).join('')+W.map
 if(!$('#tx').value.trim())$('#tx').value='';$('#ov').hidden=!W.length;$('#go').disabled=!!E.length||!$('#tx').value.trim()||(W.length>0&&!$('#ck').checked)}
 const marca=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+MES[d.getMonth()].slice(0,3)+' - '+p(d.getHours())+':'+p(d.getMinutes())}
 function guardar(){if(!id){id=Date.now();TR.unshift({id,f:{...F},log:{}})}else{const x=TR.find(t=>t.id===id);x?x.f={...F}:TR.unshift({id,f:{...F},log:{}})}LS('dsy_tr',TR);refresh()}
-$('#fm').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;F[k]=e.target.value;LS('dsy_f',F);
+$('#fm').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;if(k==='g60'||k==='cap'){const el=e.target,nd=el.value.slice(0,el.selectionStart).replace(/\D/g,'').length,d=el.value.replace(/\D/g,'');F[k]=d;el.value=d?fm(d):'';let c=0,i=0;for(;i<el.value.length&&c<nd;i++)if(/\d/.test(el.value[i]))c++;try{el.setSelectionRange(i,i)}catch(x){}}else F[k]=e.target.value;LS('dsy_f',F);
 if(k==='conductor'){const c=Q('tbChofer','Chofer',F.conductor);if(c&&c.PLACAS&&!F.placa){F.placa=c.PLACAS;$('[data-k=placa]').value=F.placa}}
-if(k==='placa'||k==='conductor'){const p=Q('tbPlaca','Placas',F.placa);if(p&&p.Capacidad&&!F.cap){F.cap=p.Capacidad;$('[data-k=cap]').value=F.cap}}refresh()});
+if(k==='placa'||k==='conductor'){const p=Q('tbPlaca','Placas',F.placa);if(p&&p.Capacidad&&!F.cap){F.cap=String(p.Capacidad);$('[data-k=cap]').value=fm(F.cap)}}refresh()});
 $('#fm').addEventListener('change',e=>{if(e.target.id==='cm')F.comp=e.target.checked});
 $('#bt').onclick=e=>{const b=e.target.closest('button');if(b)abrir(b.dataset.k)};
 $('#mp').oninput=$('#tx').oninput=$('#ck').onchange=()=>chkM();
