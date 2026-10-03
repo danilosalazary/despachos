@@ -95,7 +95,8 @@ function lists(){const L={Areas:T.tbAreas.map(r=>r.Areas),Producto:T.tbProductos
 hora:T.tbHoraOrden.map(r=>r['hora orden']),resp:T.tbRespo.map(r=>r['Responsables Descarga']),clientes:T.listas.clientes,sectores:T.listas.sectores,destinos:T.listas.destinos,
 muelles:uniq(T.tbMuelles.map(r=>r.Destinos).concat('Industria')),chofer:T.tbChofer.map(r=>r.Chofer),placa:T.tbPlaca.map(r=>r.Placas)};for(const k in L)L[k]=S(L[k]);return L}
 function build(){const L=lists();$('#fm').innerHTML=FLD.map(([k,n,t])=>{let h;
-if(t.startsWith('s:'))h=`<select data-k="${k}">${opts(L[t.slice(2)],F[k])}</select>`;
+if(k==='area')h=`<select data-k="area"><option></option>${[...T.tbAreas].sort((a,b)=>String(a.Nombre).localeCompare(String(b.Nombre),'es')||String(a.Areas).localeCompare(String(b.Areas))).map(r=>`<option value="${esc(r.Areas)}" ${eq(r.Areas,F.area)?'selected':''}>${esc(String(r.Nombre).replace(/\*/g,''))}${T.tbAreas.filter(z=>z.Nombre===r.Nombre).length>1?' ('+esc(r.Areas)+')':''}</option>`).join('')}</select>`;
+else if(t.startsWith('s:'))h=`<select data-k="${k}">${opts(L[t.slice(2)],F[k])}</select>`;
 else if(t.startsWith('l:'))h=`<input data-k="${k}" list="dl_${t.slice(2)}" value="${esc(F[k])}" autocomplete="off">`;
 else h=`<input data-k="${k}" type="${t}" value="${esc(F[k])}">`;
 return `<div><label>${n}</label>${h}</div>`}).join('')+'<div class="f"><label><input type="checkbox" id="cm" '+(F.comp?'checked':'')+'> Viaje compartido</label></div>'+
